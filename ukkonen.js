@@ -1,5 +1,105 @@
 let cmp = 0;
 
+
+
+class TreeNode{
+    parent = null;
+    subtrees = {};
+    constructor(base,start){
+        this.base = base;
+        this.start = start;
+    }
+    charAt(n){
+        return this.base[this.start+n];
+    }
+    split(i){
+        let internalNode = new Internal(this.base,this.start,this.start+i);
+        //replace parent's this position with that of the internal node
+        this.parent[internalNode.charAt(0)] = internalNode;
+        internalNode.parent = this.parent;
+        
+        this.start += i;
+        internalNode.subtrees[this.charAt(0)] = this;
+        this.parent = internalNode;
+        return internalNode;
+    }
+    addLeaf(start,suffixStart){
+        let c = this.base[start];
+        let leaf = new Leaf(this.base,start,suffixStart);
+        this.subtrees[char] = leaf;
+        leaf.parent = this;
+    }
+}
+
+
+
+class Leaf extends TreeNode{
+    constructor(base,start,suffixStart){
+        super(base,start);
+        this.suffixStart = suffixStart;
+    }
+}
+
+class Internal extends TreeNode{
+    lesserptr = null;//points to the lesser (shorter) counterpart of its variations
+    //every internal node except for the one closest to the root has lesserptr
+    constructor(base,start,end){
+        super(base,start);
+        this.end = end;
+    }
+}
+
+
+
+let constructTree = function(str){
+    let root = new TreeNode;
+    let remainder = 0;
+    //activePoint
+    let activeNode = root;
+    let activeEdge = null;
+    let activeLength = 0;//how far it looks at the active edge
+    for(let i = 0; i < str.length; i++){
+        remainder++;
+        let char = str[i];
+        if(activeEdge === null){//vanilla insertion, nothing to worrty about
+            if(!(char in activeNode.subtrees)){
+                //ezpz insert as usual
+                remainder--;
+                activeNode.addLeaf(i,i-remainder);
+            }else{
+                //found overlap in child nodes
+                //increment the active point, which stores the overlap length
+                activeEdge = activeNode.subtrees[char];
+                activeLength = 1;//first char overalps
+            }
+        }else{
+            if(!activeEdge.leaf && activeLength >= activeEdge.end-activeEdge.start){
+                //current active edge is not long enough to support the inserted substring
+                //change the active node, and look at their children
+                activeNode = activeEdge;
+                activeEdge = activeEdge.subtrees[char];
+                activeLength = 0;
+            }
+            
+            if(char === activeEdge.charAt(activeLength)){
+                activeLength++;
+            }else{
+                //successful first insertion
+                //split the active edge
+                if(activeLength !== 0)activeNode = activeEdge.split(activeLength);
+                activeNode.addLeaf(i,i-ramainder);
+                while(--remainder){
+                    if(activeNode.lesserptr){
+                        activeNode = activeNode.lesserptr;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
 class TreeNode{
     empty = true;
     prefix = null;
